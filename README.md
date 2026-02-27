@@ -1,6 +1,6 @@
-# 📊 AI Data Analysis Agent
+# 📊 Data Analysis Agent
 
-An AI data analysis Agent built using the Agno Agent framework. This agent helps users analyze their data (CSV, Excel files) through natural language queries, powered by **OpenAI** and **Groq** language models and **DuckDB** for efficient data processing - making data analysis accessible to users regardless of their SQL expertise.
+The data analysis Agent built using the Agno Agent framework. This agent helps users analyze their data (CSV, Excel files) through natural language queries, powered by **OpenAI** and **Groq** language models and **DuckDB** for efficient data processing - making data analysis accessible to users regardless of their SQL expertise.
 
 ## ✨ Features
 
