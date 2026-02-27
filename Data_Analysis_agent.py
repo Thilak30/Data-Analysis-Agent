@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
+from agno.models.groq import Groq
 from agno.tools.duckdb import DuckDbTools
 from agno.tools.pandas import PandasTools
 
@@ -48,20 +49,30 @@ def preprocess_and_save(file):
 # Streamlit app
 st.title("📊 Data Analyst Agent")
 
-# Sidebar for API keys
+# Sidebar for Settings
 with st.sidebar:
-    st.header("API Keys")
-    openai_key = st.text_input("Enter your OpenAI/GROQ API key:", type="password")
-    if openai_key:
-        st.session_state.openai_key = openai_key
-        st.success("API key saved!")
+    st.header("Settings")
+    provider = st.selectbox("Select LLM Provider", ["OpenAI", "Groq"])
+    
+    if provider == "OpenAI":
+        api_key = st.text_input("Enter your OpenAI API key:", type="password")
+        model_name = st.selectbox("Select OpenAI Model", ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"])
     else:
-        st.warning("Please enter your OpenAI API key to proceed.")
+        api_key = st.text_input("Enter your Groq API key:", type="password")
+        model_name = st.selectbox("Select Groq Model", ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "llama3-70b-8192"])
+        
+    if api_key:
+        st.session_state.api_key = api_key
+        st.session_state.provider = provider
+        st.session_state.model_name = model_name
+        st.success(f"{provider} API key saved!")
+    else:
+        st.warning(f"Please enter your {provider} API key to proceed.")
 
 # File upload widget
 uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
 
-if uploaded_file is not None and "openai_key" in st.session_state:
+if uploaded_file is not None and "api_key" in st.session_state:
     # Preprocess and save the uploaded file
     temp_path, columns, df = preprocess_and_save(uploaded_file)
     
@@ -82,9 +93,15 @@ if uploaded_file is not None and "openai_key" in st.session_state:
             table="uploaded_data",
         )
         
+        # Initialize the appropriately selected model
+        if st.session_state.provider == "OpenAI":
+            llm_model = OpenAIChat(id=st.session_state.model_name, api_key=st.session_state.api_key)
+        else:
+            llm_model = Groq(id=st.session_state.model_name, api_key=st.session_state.api_key)
+            
         # Initialize the Agent with DuckDB and Pandas tools
         data_analyst_agent = Agent(
-            model=OpenAIChat(id="gpt-4o", api_key=st.session_state.openai_key),
+            model=llm_model,
             tools=[duckdb_tools, PandasTools()],
             system_message="You are an expert data analyst. Use the 'uploaded_data' table to answer user queries. Generate SQL queries using DuckDB tools to solve the user's query. Provide clear and concise answers with the results.",
             markdown=True,
